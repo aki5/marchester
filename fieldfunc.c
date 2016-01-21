@@ -230,7 +230,7 @@ fieldfunc(float *ipos)
 	res = boolsub(res, boxes);
 
 	float tor2;
-	tor2 = fabsf(torus(pos, 1.0, 0.6))-0.02;
+	tor2 = fabsf(torus(pos, 1.0, 0.6))-0.05;
 	tor2 = boolisect(tor2, halfspace(pos, (float[]){0,1,0,0.5}));
 	tor2 = boolisect(tor2, halfspace(pos, (float[]){0,-1,0,0.5}));
 	res = booladd(res, tor2);
