@@ -29,6 +29,7 @@
 #include "stltext.h"
 #include "stlbin.h"
 #include "vec3f.h"
+#include "simdvec3f.h"
 
 typedef struct Params Params;
 struct Params {
@@ -90,9 +91,15 @@ marchloop(void *apar)
 	for(i = par->istart; i < par->iend; i++){ // x
 		y0i = 0;
 		for(j = par->jstart; j <= par->jend; j++){ // y
+			float step[3] = {par->xstep, par->ystep, par->zstep};
+			float orig[3] = {par->xmin, par->ymin, par->zmin};
 			for(k = par->kstart; k <= par->kend; k++){ // z
+				float ijk[3] = {i, j, k};
+				float pos[3];
 				z0i = k - par->kstart;
-				valsx1[y0i+z0i] = fieldfunc((float[]){par->xmin+i*par->xstep, par->ymin+j*par->ystep, par->zmin+k*par->zstep}); // x1 y1 z1
+				mul3f(pos, step, ijk);
+				add3f(pos, pos, orig);
+				valsx1[y0i+z0i] = fieldfunc(pos); // x1 y1 z1
 			}
 			y0i += ystride;
 		}

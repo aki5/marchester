@@ -69,6 +69,14 @@ sub3f(float *dst, float *a, float *b)
 }
 
 static void
+mul3f(float *dst, float *a, float *b)
+{
+	dst[0] = a[0] * b[0];
+	dst[1] = a[1] * b[1];
+	dst[2] = a[2] * b[2];
+}
+
+static void
 cross3f(float *dst, float *a, float *b)
 {
 	dst[0] = a[1]*b[2] - a[2]*b[1];
