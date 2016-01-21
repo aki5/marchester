@@ -30,6 +30,19 @@ copy3f(float *dst, float *src)
 	dst[2] = src[2];
 }
 
+static int
+cmp3f(float *a, float *b)
+{
+	int i;
+	for(i = 0; i < 3; i++){
+		if(a[i] < b[i])
+			return -1;
+		if(a[i] > b[i])
+			return 1;
+	}
+	return 0;
+}
+
 static void
 lerp3f(float *dst, float *a, float *b, float bfact)
 {

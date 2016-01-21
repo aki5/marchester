@@ -37,7 +37,7 @@ static int8_t tritab[];
  *	vals contains samples at the said positions.
  *	corner indexing is as follows
  *
- *	coordinate axis in the boxes below
+ *	coordinate axes in the boxes below:
  *
  *		  z
  *		  |
@@ -46,7 +46,8 @@ static int8_t tritab[];
  *		 /
  *		y
  *
- *	cube corner indices
+ *
+ *	cube corner indices:
  *
  *		  4 ----- 5
  *		 /|      /|
@@ -55,7 +56,8 @@ static int8_t tritab[];
  *		|/      |/
  *		3 ----- 2
  *
- *	cube edge indices
+ *
+ *	cube edge indices:
  *
  *		    +--- 4 ---+
  *		   /|        /|
@@ -64,7 +66,7 @@ static int8_t tritab[];
  *		 |  +--- 0 |--+
  *		11 /      10 /
  *		 |3        |1
- *       +--- 2 ---+
+ *		 +--- 2 ---+
  */
 
 void
@@ -109,7 +111,16 @@ marchcube(float *cube, float *vals, float treshval, float *tris)
 			} else if(fabsf(srcval-dstval) < 1e-5f){
 				copy3f(isectpos, srcpos);
 			} else {
-				lerp3f(isectpos, srcpos, dstpos, (treshval - srcval) / (dstval-srcval));
+				switch(cmp3f(srcpos, dstpos)){
+				default:
+					return -1;
+				case -1:
+					lerp3f(isectpos, dstpos, srcpos, (treshval - dstval) / (srcval-dstval));
+					break;
+				case 1:
+					lerp3f(isectpos, srcpos, dstpos, (treshval - srcval) / (dstval-srcval));
+					break;
+				}
 			}
 		}
 	}
