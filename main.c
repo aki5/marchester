@@ -74,6 +74,15 @@ marchloop(void *apar)
 	tris = malloc(9 * BufferTris * sizeof tris[0]);
 	norms = malloc(3 * BufferTris * sizeof norms[0]);
 
+	/*
+	 *	the highest level loop moves the yz-plane along the x-axis, from minimum to maximum.
+	 *	the following two arrays are used to cache computed values at cube vertices, so that
+	 *	only one new value needs to be computed per inner cube, compared to 8 in a naive implementation.
+	 *
+	 *	valsx0 holds samples from the previous yz-plane, while valsx1 holds samples from the current yz-plane.
+	 *	valsx1 is updated by the innermost loop as new values are computed. After the inner loops, the two
+	 *	pointers are swapped before starting the next yz-plane.
+	 */
 	valsx0 = malloc((par->jend - par->jstart + 1) * (par->kend - par->kstart + 1) * sizeof valsx0[0]);
 	valsx1 = malloc((par->jend - par->jstart + 1) * (par->kend - par->kstart + 1) * sizeof valsx1[0]);
 	ystride = par->kend - par->kstart + 1;
@@ -110,6 +119,10 @@ marchloop(void *apar)
 				valsx1[y1i+z1i] = vals[6] = fieldfunc(cube + 3*6); // x1 y1 z1
 
 				n = marchcube(cube, vals, 0.0, tris + 9*ntris);
+				if(n == -1){
+					printf("marchcube: fail\n");
+					exit(1);
+				}
 
 				for(l = 0; l < n; l++){
 					float ab[3], ac[3];
