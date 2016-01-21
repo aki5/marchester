@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <pthread.h>
 #include <string.h>
+#include <unistd.h>
 #include "marchcube.h"
 #include "stltext.h"
 #include "stlbin.h"
@@ -57,24 +58,57 @@ marchloop(void *apar)
 	};
 	float cube[8*3];
 	float vals[8];
+	float *valsx0;
+	float *valsx1;
+	float *valstmp;
 	float *tris;
 	float *norms;
 	Params *par = (Params*)apar;
 	int i, j, k, l;
+	int y0i, y1i, ystride;
+	int z0i, z1i;
 	int n, ntris;
 
 	ntris = 0;
+
 	tris = malloc(9 * BufferTris * sizeof tris[0]);
 	norms = malloc(3 * BufferTris * sizeof norms[0]);
-	for(i = par->istart; i < par->iend; i++){
-		for(j = par->jstart; j < par->jend; j++){
-			for(k = par->kstart; k < par->kend; k++){
 
+	valsx0 = malloc((par->jend - par->jstart + 1) * (par->kend - par->kstart + 1) * sizeof valsx0[0]);
+	valsx1 = malloc((par->jend - par->jstart + 1) * (par->kend - par->kstart + 1) * sizeof valsx1[0]);
+	ystride = par->kend - par->kstart + 1;
+
+	for(i = par->istart; i < par->iend; i++){ // x
+		y0i = 0;
+		for(j = par->jstart; j < par->jend; j++){ // y
+			for(k = par->kstart; k < par->kend; k++){ // z
 				marchunit(cube, par->xmin+i*par->xstep, par->ymin+j*par->ystep, par->zmin+k*par->zstep, par->xmin+(i+1)*par->xstep, par->ymin+(j+1)*par->ystep, par->zmin+(k+1)*par->zstep);
+				z0i = k - par->kstart;
+				z1i = z0i+1;
+				y1i = y0i+ystride;
 
-				for(l = 0; l < 8; l++)
-					vals[l] = fieldfunc(cube + 3*l);
-				
+				if(i == par->istart || j == par->jstart || k == par->kstart){
+					vals[0] = fieldfunc(cube + 3*0); // x0 y0 z0
+					vals[1] = fieldfunc(cube + 3*1); // x1 y0 z0
+					vals[2] = fieldfunc(cube + 3*2); // x1 y1 z0
+					vals[3] = fieldfunc(cube + 3*3); // x0 y1 z0
+					vals[4] = fieldfunc(cube + 3*4); // x0 y0 z1
+					vals[5] = fieldfunc(cube + 3*5); // x1 y0 z1
+					//vals[6] = fieldfunc(cube + 3*6); // x1 y1 z1
+					vals[7] = fieldfunc(cube + 3*7); // x0 y1 z1
+				} else {
+					vals[0] = valsx0[y0i+z0i]; // x0 y0 z0
+					vals[1] = valsx1[y0i+z0i]; // x1 y0 z0
+					vals[2] = valsx1[y1i+z0i]; // x1 y1 z0
+					vals[3] = valsx0[y1i+z0i]; // x0 y1 z0
+					vals[4] = valsx0[y0i+z1i]; // x0 y0 z1
+					vals[5] = valsx1[y0i+z1i]; // x1 y0 z1
+					//vals[6] = fieldfunc(cube + 3*6); // x1 y1 z1
+					vals[7] = valsx0[y1i+z1i]; // x0 y1 z1
+				}
+
+				valsx1[y1i+z1i] = vals[6] = fieldfunc(cube + 3*6); // x1 y1 z1
+
 				n = marchcube(cube, vals, 0.0, tris + 9*ntris);
 
 				for(l = 0; l < n; l++){
@@ -93,7 +127,12 @@ marchloop(void *apar)
 					ntris = 0;
 				}
 			}
+			y0i += ystride;
 		}
+		// xstep: swap buffers.
+		valstmp = valsx0;
+		valsx0 = valsx1;
+		valsx1 = valstmp;
 	}
 	if(ntris > 0){
 		pthread_mutex_lock(par->outlock);
@@ -103,6 +142,9 @@ marchloop(void *apar)
 	}
 	free(norms);
 	free(tris);
+	free(par);
+	free(valsx0);
+	free(valsx1);
 
 	return NULL;
 }
@@ -136,30 +178,30 @@ main(int argc, char *argv[])
 
 	stlbin_begin(stdout, "no comment", NULL);
 
-	int i, nthreads = 2;
+	int i, nthreads = sysconf(_SC_NPROCESSORS_ONLN);;
 	pthread_t thr[nthreads];
 	pthread_mutex_t outlock;
 	Params par = (Params){
-			.istart = 0,
-			.jstart = 0,
-			.kstart = 0,
-			.iend = ndiv,
-			.jend = ndiv,
-			.kend = ndiv,
-			.xmin = xmin,
-			.ymin = ymin,
-			.zmin = zmin,
-			.xstep = xstep,
-			.ystep = ystep,
-			.zstep = zstep,
-			.out = stdout,
-			.outlock = &outlock,
-		};
+		.istart = 0,
+		.jstart = 0,
+		.kstart = 0,
+		.iend = ndiv,
+		.jend = ndiv,
+		.kend = ndiv,
+		.xmin = xmin,
+		.ymin = ymin,
+		.zmin = zmin,
+		.xstep = xstep,
+		.ystep = ystep,
+		.zstep = zstep,
+		.out = stdout,
+		.outlock = &outlock,
+	};
 	pthread_mutex_init(&outlock, NULL);
 	for(i = 0; i < nthreads; i++){
 		Params *parp;
-		par.istart = i*ndiv/nthreads;
-		par.iend = (i+1)*ndiv/nthreads;
+		par.jstart = i*ndiv/nthreads;
+		par.jend = (i+1)*ndiv/nthreads;
 		parp = malloc(sizeof par);
 		memcpy(parp, &par, sizeof par);
 		pthread_create(&thr[i], NULL, marchloop, parp);
