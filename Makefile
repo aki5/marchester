@@ -1,5 +1,5 @@
 
-CFLAGS=-O3 -mavx -ffast-math -W -Wall -fomit-frame-pointer -Wno-unused-function
+CFLAGS=-O3 -mavx -ffast-math -W -Wall -fomit-frame-pointer -Wno-unused-function -D_GNU_SOURCE
 #CFLAGS=-g
 
 HFILES=\
@@ -16,10 +16,13 @@ OFILES=\
 	stlbin.o\
 	stltext.o\
 
+LIBS=\
+	-lpthread
+
 all: marchester
 
 marchester: $(OFILES)
-	$(CC) -o $@  $(OFILES)
+	$(CC) -o $@  $(OFILES) $(LIBS)
 
 clean:
 	rm -f marchester *.o

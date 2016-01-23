@@ -30,9 +30,12 @@
 #include "stlbin.h"
 #include "vec3f.h"
 
+typedef void *(*pthread_start_t) (void *);
+
 
 typedef struct Params Params;
 struct Params {
+	int core;
 	int istart, jstart, kstart;
 	int iend, jend, kend;
 	float xmin, ymin, zmin;
@@ -43,6 +46,18 @@ struct Params {
 
 float fieldfunc(float *ipos);
 
+int
+fixtocore(int core)
+{
+	cpu_set_t cpuset;
+	int ret;
+	CPU_ZERO(&cpuset);
+	CPU_SET(core, &cpuset);
+	ret = pthread_setaffinity_np(pthread_self(), sizeof cpuset, &cpuset);
+	sched_yield(); // move to the core we set ourselves to.
+	return ret;
+}
+
 void
 flushtris(FILE *out, float *tris, float *norms, int ntris)
 {
@@ -52,7 +67,7 @@ flushtris(FILE *out, float *tris, float *norms, int ntris)
 }
 
 void *
-marchloop(void *apar)
+marchloop(Params *par)
 {
 	enum {
 		BufferTris = 1024,
@@ -64,14 +79,16 @@ marchloop(void *apar)
 	float *valstmp;
 	float *tris;
 	float *norms;
-	Params *par = (Params*)apar;
 	int i, j, k, l;
 	int y0i, y1i, ystride;
 	int z0i, z1i;
 	int n, ntris;
 
-	ntris = 0;
+	if(fixtocore(par->core) == -1){
+		fprintf(stderr, "fixtocore(%d) failed\n", par->core);
+	}
 
+	ntris = 0;
 	tris = malloc(9 * BufferTris * sizeof tris[0]);
 	norms = malloc(3 * BufferTris * sizeof norms[0]);
 
@@ -202,6 +219,7 @@ main(int argc, char *argv[])
 	pthread_t thr[nthreads];
 	pthread_mutex_t outlock;
 	Params par = (Params){
+		.core = 0,
 		.istart = 0,
 		.jstart = 0,
 		.kstart = 0,
@@ -220,11 +238,12 @@ main(int argc, char *argv[])
 	pthread_mutex_init(&outlock, NULL);
 	for(i = 0; i < nthreads; i++){
 		Params *parp;
+		par.core = i;
 		par.jstart = i*ndiv/nthreads;
 		par.jend = (i+1)*ndiv/nthreads;
 		parp = malloc(sizeof par);
 		memcpy(parp, &par, sizeof par);
-		pthread_create(&thr[i], NULL, marchloop, parp);
+		pthread_create(&thr[i], NULL, (pthread_start_t)marchloop, parp);
 	}
 	for(i = 0; i < nthreads; i++)
 		pthread_join(thr[i], NULL);
