@@ -1,12 +1,27 @@
 
-CFLAGS=-O3 -ffast-math -W -Wall -fomit-frame-pointer -Wno-unused-function
+CFLAGS=-O3 -mavx -ffast-math -W -Wall -fomit-frame-pointer -Wno-unused-function
 #CFLAGS=-g
+
+HFILES=\
+	marchcube.h\
+	vec3f8p.h\
+	stlbin.h\
+	stltext.h\
+	vec3f.h\
+
+OFILES=\
+	fieldfunc.o\
+	main.o\
+	marchcube.o\
+	stlbin.o\
+	stltext.o\
 
 all: marchester
 
-marchester: main.o stltext.o stlbin.o fieldfunc.o marchcube.o
-	$(CC) -o $@  main.o stltext.o stlbin.o fieldfunc.o marchcube.o
+marchester: $(OFILES)
+	$(CC) -o $@  $(OFILES)
 
 clean:
 	rm -f marchester *.o
 
+$(OFILES): $(HFILES)

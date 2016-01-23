@@ -29,7 +29,7 @@
 #include "stltext.h"
 #include "stlbin.h"
 #include "vec3f.h"
-#include "simdvec3f.h"
+
 
 typedef struct Params Params;
 struct Params {
