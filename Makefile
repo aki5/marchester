@@ -1,5 +1,5 @@
 
-CFLAGS=-O3 -mavx -ffast-math -W -Wall -fomit-frame-pointer -Wno-unused-function -D_GNU_SOURCE
+CFLAGS=-O3 -ffast-math -W -Wall -fomit-frame-pointer -Wno-unused-function -D_GNU_SOURCE
 #CFLAGS=-g
 
 HFILES=\
@@ -17,7 +17,8 @@ OFILES=\
 	stltext.o\
 
 LIBS=\
-	-lpthread
+	-lpthread\
+	-lm\
 
 all: marchester
 
