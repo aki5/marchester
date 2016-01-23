@@ -20,37 +20,6 @@
  *	OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  *	WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-#include <math.h>
-#include <immintrin.h>
-
-typedef float float8p __attribute__((vector_size(32)));
-typedef int32_t int8p __attribute__((vector_size(32)));
-
-#define bcastf8p(val) ((float8p){val, val, val, val, val, val, val, val})
-
-static void
-absf8p(float8p *dst, float8p a)
-{
-	*dst =  (float8p)((int8p)a & ~(int8p)bcastf8p(-0.0f));
-}
-
-static void
-sqrtf8p(float8p *dst, float8p a)
-{
-	*dst = __builtin_ia32_sqrtps256(a);
-}
-
-static void
-minf8p(float8p *dst, float8p a, float8p b)
-{
-	*dst = __builtin_ia32_minps256(a, b);
-}
-
-static void
-maxf8p(float8p *dst, float8p a, float8p b)
-{
-	*dst = __builtin_ia32_maxps256(a, b);
-}
 
 static void
 copy3f8p(float *fdst, float *fsrc)
@@ -70,7 +39,7 @@ lerp3f8p(float *fdst, float *fa, float *fb, float *fbfact)
 	float8p *a = (float8p *)fa;
 	float8p *b = (float8p *)fb;
 	float8p bfact = *(float8p *)fbfact;
-	float8p afact = (float8p){1.0f,1.0f,1.0f,1.0f,1.0f,1.0f,1.0f,1.0f} - bfact;
+	float8p afact = bcastf8p(1.0f) - bfact;
 
 	dst[0] = a[0]*afact + b[0]*bfact;
 	dst[1] = a[1]*afact + b[1]*bfact;

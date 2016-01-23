@@ -89,7 +89,10 @@ marchloop(void *apar)
 	ystride = par->kend - par->kstart + 1;
 
 	for(i = par->istart; i < par->iend; i++){ // x
+
 		y0i = 0;
+		// if we were to use an accelerator, this loop would be it.
+		// it's a perfect match for execution on a gpu.
 		for(j = par->jstart; j <= par->jend; j++){ // y
 			float step[3] = {par->xstep, par->ystep, par->zstep};
 			float orig[3] = {par->xmin, par->ymin, par->zmin};
