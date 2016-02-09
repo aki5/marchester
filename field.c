@@ -22,6 +22,7 @@
  */
 
 #include <math.h>
+#include "mathp.h"
 #include "vec3f.h"
 
 static float clampf(float a, float min, float max) {return a < min ? min : a > max ? max : a; }
@@ -55,9 +56,7 @@ smaxf(float a, float b)
 	return -sminf(-a, -b);
 }
 
-static float sq(float a) { return a*a; }
-static float sq4(float a) { return sq(a)*sq(a); }
-static float sq8(float a) { return sq4(a)*sq4(a); }
+static float square(float a) { return a*a; }
 
 static float
 halfspace(float *pos, float *pl)
@@ -66,15 +65,9 @@ halfspace(float *pos, float *pl)
 }
 
 static float
-cube8(float *pos, float r)
-{
-	return sqrtf(sq8(pos[0])+sq8(pos[1])+sq8(pos[2]))-r;
-}
-
-static float
 sphere(float *pos, float r)
 {
-	return sqrtf(sq(pos[0])+sq(pos[1])+sq(pos[2]))-r;
+	return sqrtf(square(pos[0])+square(pos[1])+square(pos[2]))-r;
 }
 
 static float
@@ -83,7 +76,7 @@ cylinder(float *pos, int axis, float r)
 	int ax0, ax1;
 	ax0 = (axis+1)%3; // 1 2 0
 	ax1 = (axis+2)%3; // 2 0 1
-	return sqrtf(sq(pos[ax0])+sq(pos[ax1]))-r;
+	return sqrtf(square(pos[ax0])+square(pos[ax1]))-r;
 }
 
 static float
@@ -112,8 +105,8 @@ static float
 torus(float *pos, float a, float b)
 {
 	float tmp;
-	tmp = sqrtf(sq(pos[0])+sq(pos[2]))-a;
-	return sqrtf(sq(tmp)+sq(pos[1]))-b;
+	tmp = sqrtf(square(pos[0])+square(pos[2]))-a;
+	return sqrtf(square(tmp)+square(pos[1]))-b;
 }
 
 static float
@@ -185,17 +178,19 @@ rep3f(float *pos, float c)
 	pos[2] = fmodf(fabsf(pos[2]), c)-0.5*c;
 }
 
-float
-fieldfunc(float *ipos)
+void
+field(float *r, float *ipos)
 {
 	float pos[3];
 	float rep[3];
 	float dst = 1.75f;
-	float box, boxes, caps;
+	float boxes;
 	float tor;
 
+/*
+	float caps;
 	caps = capsule(ipos, (float[]){-1,-1,-1}, (float[]){1,1,1}, 0.5);
-
+*/
 
 	copy3f(pos, ipos);
 //	twist3f(pos, 1.5f);
@@ -204,19 +199,20 @@ fieldfunc(float *ipos)
 	rep3f(rep, 0.375);
 	boxes = roundcube(rep, (float[]){0.1, 0.1, 0.1f}, 0.1);
 
-
+/*
+	float box;
 	box = sphere(pos, 1.0);
-
+*/
 	tor = torus(pos, 1.0, 0.6);
 
 
+
+/*
 	float cyl1 = cylinder(pos, 2, 0.5);
 	float cyl2 = cylinder(pos, 0, 0.5);
 	float cyl3 = cylinder(pos, 1, 0.5);
-
-
 	float sect = halfspace(pos, (float[]){0.00,1.00,0.00,0.1});
-
+*/
 
 	float res;
 
@@ -256,5 +252,5 @@ fieldfunc(float *ipos)
 	res = boolisect(res, posy);
 	res = boolisect(res, posz);
 
-	return res;
+	*r = res;
 }

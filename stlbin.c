@@ -54,13 +54,14 @@ stlbin_begin(FILE *out, char *comment, unsigned char *rgba)
 
 	memset(buf, 0, sizeof buf);
 	strncpy(buf, comment, 69);
-/*
-	strncpy(buf+70, "COLOR=", 6);
-	buf[76] = rgba != NULL ? rgba[0] : 255;
-	buf[77] = rgba != NULL ? rgba[1] : 255;
-	buf[78] = rgba != NULL ? rgba[2] : 255;
-	buf[79] = rgba != NULL ? rgba[3] : 255;
-*/
+
+	if(rgba != NULL){
+		strncpy(buf+70, "COLOR=", 6);
+		buf[76] = rgba[0];
+		buf[77] = rgba[1];
+		buf[78] = rgba[2];
+		buf[79] = rgba[3];
+	}
 	return fwrite(buf, 84, 1, out);
 }
 

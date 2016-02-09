@@ -30,6 +30,7 @@
 #include "stlbin.h"
 #include "vec3f.h"
 
+#define nelem(x) (sizeof(x)/sizeof(x[0]))
 typedef void *(*pthread_start_t) (void *);
 
 
@@ -44,7 +45,7 @@ struct Params {
 	pthread_mutex_t *outlock;
 };
 
-float fieldfunc(float *ipos);
+extern void field(float *r, float *pos);
 
 int
 fixtocore(int core)
@@ -119,7 +120,7 @@ marchloop(Params *par)
 				z0i = k - par->kstart;
 				mul3f(pos, step, ijk);
 				add3f(pos, pos, orig);
-				valsx1[y0i+z0i] = fieldfunc(pos); // x1 y1 z1
+				field(&valsx1[y0i+z0i], pos); // x1 y1 z1
 			}
 			y0i += ystride;
 		}
