@@ -124,6 +124,13 @@ capsule(float *pos, float *a, float *b, float r)
 }
 
 static float
+gyroid(float *pos, float scale, float thickness)
+{
+	float x = scale*pos[0], y = scale*pos[1], z = scale*pos[2];
+	return fabsf(cosf(x)*sinf(y) + cosf(y)*sinf(z) + cosf(z)*sinf(x)) - 0.5f*thickness;
+}
+
+static float
 boolisect(float a, float b)
 {
 	return maxf(a, b);
@@ -222,8 +229,11 @@ field(float *r, float *ipos)
 	res = sbooladd(res, cyl2);
 	res = sboolsub(res, cyl3);
 */
+	float gyr = gyroid(pos, 5.0f, 0.2f);
 	res = tor;
-	res = boolsub(res, boxes);
+//	res = boolsub(res, boxes);
+	res = boolisect(res, gyr);
+
 
 	float tor2;
 	tor2 = fabsf(torus(pos, 1.0, 0.6))-0.05;
